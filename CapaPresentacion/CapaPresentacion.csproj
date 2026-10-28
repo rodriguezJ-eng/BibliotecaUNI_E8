@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <!-- Se conserva el namespace original para no romper los formularios de todo el equipo -->
+    <RootNamespace>BibliotecaUniversitaria</RootNamespace>
+    <AssemblyName>CapaPresentacion</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Reportes\rptEjemplares.rdlc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Reportes\rptEjemplares.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Mismos paquetes que CapaDatos: este es el proyecto ejecutable -->
+    <PackageReference Include="EntityFramework" Version="6.5.2" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+    <PackageReference Include="Microsoft.ReportingServices.ReportViewerControl.Winforms" Version="150.1652.0" />
+    <!-- Entregable 5: Entity Framework Core en el proyecto de inicio (misma versión que CapaDatos) -->
+    <!-- Herramientas para generar el modelo con Scaffold-DbContext (solo desarrollo) -->
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- La presentación solo conoce a CapaNegocio y Entidades (nunca a CapaDatos) -->
+    <ProjectReference Include="..\CapaNegocio\CapaNegocio.csproj" />
+    <ProjectReference Include="..\Entidades\Entidades.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

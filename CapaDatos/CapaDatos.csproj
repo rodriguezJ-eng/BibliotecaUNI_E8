@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RootNamespace>CapaDatos</RootNamespace>
+    <AssemblyName>CapaDatos</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="ModeloBibliotecaUniversitaria.edmx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EntityDeploy Include="ModeloBibliotecaUniversitaria.edmx">
+      <Generator>EntityModelCodeGenerator</Generator>
+      <LastGenOutput>ModeloBibliotecaUniversitaria.Designer.cs</LastGenOutput>
+    </EntityDeploy>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EntityFramework" Version="6.5.2" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+    <!-- Entregable 5: Entity Framework Core 8 (proveedor de SQL Server) -->
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Entidades\Entidades.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Data.Entity" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="ModeloBibliotecaUniversitaria.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ModeloBibliotecaUniversitaria.edmx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+</Project>
