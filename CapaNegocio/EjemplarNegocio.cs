@@ -79,6 +79,20 @@ namespace CapaNegocio
             return CompletarTitulos(datos.ConsultarTodos());
         }
 
+        /// <summary>Busca un ejemplar por su clave primaria (null si no existe).</summary>
+        public EjemplarEntidad BuscarPorId(int idEjemplar)
+        {
+            if (idEjemplar <= 0)
+                return null;
+
+            EjemplarEntidad ejemplar = datos.Buscar(idEjemplar);
+
+            if (ejemplar != null)
+                CompletarTitulos(new List<EjemplarEntidad> { ejemplar });
+
+            return ejemplar;
+        }
+
         /// <summary>Filtro 1: por estado. "Todos" o vacío devuelve todos los ejemplares.</summary>
         public List<EjemplarEntidad> BuscarPorEstado(string estado)
         {

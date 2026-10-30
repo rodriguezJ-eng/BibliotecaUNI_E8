@@ -2,33 +2,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using CapaNegocio;
 using Entidades;
 
 namespace BibliotecaUniversitaria.Forms
 {
     public partial class frmGestionMultas : Form
     {
-        /// <summary>
-        /// Lista estática global de multas generadas desde la gestión de préstamos.
-        /// </summary>
-        public static List<Multa> Multas { get; } = new List<Multa>();
-
-        private static int _siguienteIdMulta = 1;
-
-        /// <summary>
-        /// Genera el próximo ID incremental para una nueva multa.
-        /// </summary>
-        public static int SiguienteIdMulta() => _siguienteIdMulta++;
+        private readonly MultaNegocio multaNegocio = new MultaNegocio();
+        private List<Multa> multas = new List<Multa>();
 
         public frmGestionMultas()
         {
             InitializeComponent();
 
-            // Evento para capturar el ID cuando el usuario selecciona una fila en la tabla
             dgvMultas.SelectionChanged += DgvMultas_SelectionChanged;
 
-            // Cargar multas registradas al abrir la ventana
-            CargarMultasEnGrid(Multas);
+            CargarMultasDesdeBD();
         }
 
         private void DgvMultas_SelectionChanged(object sender, EventArgs e)
@@ -43,23 +33,44 @@ namespace BibliotecaUniversitaria.Forms
             }
         }
 
-
+        private void CargarMultasDesdeBD()
+        {
+            try
+            {
+                multas = multaNegocio.ConsultarTodos();
+                CargarMultasEnGrid(multas);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar las multas: " + ex.Message,
+                    "Gestión de Multas", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
         private void btnEliminar_Click(object sender, EventArgs e)
         {
-            var multa = ObtenerMultaSeleccionada();
+            Multa multa = ObtenerMultaSeleccionada();
             if (multa == null) return;
 
-            var respuesta = MessageBox.Show($"¿Está seguro de eliminar la multa #{multa.Id} del sistema?",
+            DialogResult respuesta = MessageBox.Show(
+                "¿Está seguro de eliminar la multa #" + multa.Id + " del sistema?",
                 "Confirmar eliminación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (respuesta != DialogResult.Yes) return;
 
-            Multas.Remove(multa);
-            CargarMultasEnGrid(Multas);
+            try
+            {
+                multaNegocio.Eliminar(multa.Id);
+                CargarMultasDesdeBD();
 
-            MessageBox.Show("Multa eliminada correctamente.", "Gestión de Multas",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Multa eliminada correctamente.", "Gestión de Multas",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Gestión de Multas",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private Multa ObtenerMultaSeleccionada()
@@ -71,8 +82,13 @@ namespace BibliotecaUniversitaria.Forms
                 return null;
             }
 
-            int id = Convert.ToInt32(dgvMultas.CurrentRow.Cells["Column1"].Value);
-            var multa = Multas.FirstOrDefault(m => m.Id == id);
+            Multa multa = dgvMultas.CurrentRow.Tag as Multa;
+
+            if (multa == null)
+            {
+                int id = Convert.ToInt32(dgvMultas.CurrentRow.Cells["Column1"].Value);
+                multa = multaNegocio.Buscar(id);
+            }
 
             if (multa == null)
             {
@@ -87,16 +103,21 @@ namespace BibliotecaUniversitaria.Forms
         {
             dgvMultas.Rows.Clear();
 
-            foreach (var m in lista)
+            foreach (Multa m in lista)
             {
-                dgvMultas.Rows.Add(
+                int indice = dgvMultas.Rows.Add(
                     m.Id,
                     m.IdPrestamo,
                     m.Lector,
                     m.Monto.ToString("0.00"),
                     m.Estado,
                     m.FechaGeneracion.ToShortDateString());
+
+                dgvMultas.Rows[indice].Tag = m;
             }
+
+            dgvMultas.ClearSelection();
+            dgvMultas.CurrentCell = null;
         }
 
         private void btnCerrar_Click(object sender, EventArgs e)
@@ -108,34 +129,44 @@ namespace BibliotecaUniversitaria.Forms
         {
             string filtro = txtBuscar.Text.Trim();
 
-            var resultado = string.IsNullOrWhiteSpace(filtro)
-                ? Multas
-                : Multas.Where(m =>
-                    m.Lector.IndexOf(filtro, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    m.Id.ToString() == filtro ||
-                    m.IdPrestamo.ToString() == filtro).ToList();
+            try
+            {
+                multas = multaNegocio.ConsultarTodos();
 
-            CargarMultasEnGrid(resultado);
+                List<Multa> resultado = string.IsNullOrWhiteSpace(filtro)
+                    ? multas
+                    : multas.Where(m =>
+                        (m.Lector ?? string.Empty).IndexOf(filtro, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        m.Id.ToString() == filtro ||
+                        m.IdPrestamo.ToString() == filtro).ToList();
+
+                CargarMultasEnGrid(resultado);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al buscar las multas: " + ex.Message,
+                    "Gestión de Multas", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnMarcarPagada_Click(object sender, EventArgs e)
         {
-            var multa = ObtenerMultaSeleccionada();
+            Multa multa = ObtenerMultaSeleccionada();
             if (multa == null) return;
 
-            if (multa.Estado == "Pagada")
+            try
             {
-                MessageBox.Show("Esta multa ya se encuentra registrada como pagada.", "Gestión de Multas",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
+                multaNegocio.MarcarPagada(multa.Id);
+                CargarMultasDesdeBD();
+
+                MessageBox.Show("La multa #" + multa.Id + " ha sido marcada como PAGADA con éxito.",
+                    "Pago de Multa", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-
-            multa.Estado = "Pagada";
-
-            MessageBox.Show($"La multa #{multa.Id} ha sido marcada como PAGADA con éxito.", "Pago de Multa",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            CargarMultasEnGrid(Multas);
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Gestión de Multas",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

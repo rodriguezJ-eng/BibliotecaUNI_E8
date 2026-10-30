@@ -58,12 +58,15 @@ namespace BibliotecaUniversitaria.Forms
             this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.lblIdAutor = new System.Windows.Forms.Label();
             this.txtApellidoAutor = new System.Windows.Forms.TextBox();
             this.lblNombreAutor = new System.Windows.Forms.Label();
             this.txtIdAutor = new System.Windows.Forms.TextBox();
             this.txtNombreAutor = new System.Windows.Forms.TextBox();
+            this.lblNacionalidadAutor = new System.Windows.Forms.Label();
+            this.txtNacionalidadAutor = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.lblRolAutor = new System.Windows.Forms.Label();
             this.tabLibro.SuspendLayout();
@@ -438,15 +441,20 @@ namespace BibliotecaUniversitaria.Forms
             // 
             // dgvRegistroAutores
             // 
+            this.dgvRegistroAutores.AllowUserToAddRows = false;
             this.dgvRegistroAutores.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvRegistroAutores.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Column2,
             this.Column3,
-            this.Column4});
+            this.Column4,
+            this.Column6});
             this.dgvRegistroAutores.Location = new System.Drawing.Point(15, 286);
             this.dgvRegistroAutores.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.dgvRegistroAutores.MultiSelect = false;
             this.dgvRegistroAutores.Name = "dgvRegistroAutores";
+            this.dgvRegistroAutores.ReadOnly = true;
             this.dgvRegistroAutores.RowHeadersWidth = 51;
+            this.dgvRegistroAutores.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvRegistroAutores.Size = new System.Drawing.Size(808, 220);
             this.dgvRegistroAutores.TabIndex = 8;
             // 
@@ -471,6 +479,13 @@ namespace BibliotecaUniversitaria.Forms
             this.Column4.MinimumWidth = 6;
             this.Column4.Name = "Column4";
             // 
+            // Column6
+            // 
+            this.Column6.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.Column6.HeaderText = "Nacionalidad";
+            this.Column6.MinimumWidth = 6;
+            this.Column6.Name = "Column6";
+            // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.lblIdAutor);
@@ -478,6 +493,8 @@ namespace BibliotecaUniversitaria.Forms
             this.groupBox1.Controls.Add(this.lblNombreAutor);
             this.groupBox1.Controls.Add(this.txtIdAutor);
             this.groupBox1.Controls.Add(this.txtNombreAutor);
+            this.groupBox1.Controls.Add(this.lblNacionalidadAutor);
+            this.groupBox1.Controls.Add(this.txtNacionalidadAutor);
             this.groupBox1.Controls.Add(this.label2);
             this.groupBox1.Location = new System.Drawing.Point(13, 21);
             this.groupBox1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
@@ -517,6 +534,7 @@ namespace BibliotecaUniversitaria.Forms
             // 
             this.txtIdAutor.Location = new System.Drawing.Point(129, 34);
             this.txtIdAutor.Name = "txtIdAutor";
+            this.txtIdAutor.ReadOnly = true;
             this.txtIdAutor.Size = new System.Drawing.Size(285, 22);
             this.txtIdAutor.TabIndex = 1;
             // 
@@ -526,6 +544,22 @@ namespace BibliotecaUniversitaria.Forms
             this.txtNombreAutor.Name = "txtNombreAutor";
             this.txtNombreAutor.Size = new System.Drawing.Size(253, 22);
             this.txtNombreAutor.TabIndex = 3;
+            // 
+            // lblNacionalidadAutor
+            // 
+            this.lblNacionalidadAutor.AutoSize = true;
+            this.lblNacionalidadAutor.Location = new System.Drawing.Point(450, 74);
+            this.lblNacionalidadAutor.Name = "lblNacionalidadAutor";
+            this.lblNacionalidadAutor.Size = new System.Drawing.Size(94, 16);
+            this.lblNacionalidadAutor.TabIndex = 14;
+            this.lblNacionalidadAutor.Text = "Nacionalidad:";
+            // 
+            // txtNacionalidadAutor
+            // 
+            this.txtNacionalidadAutor.Location = new System.Drawing.Point(570, 74);
+            this.txtNacionalidadAutor.Name = "txtNacionalidadAutor";
+            this.txtNacionalidadAutor.Size = new System.Drawing.Size(205, 22);
+            this.txtNacionalidadAutor.TabIndex = 15;
             // 
             // label2
             // 
@@ -596,6 +630,8 @@ namespace BibliotecaUniversitaria.Forms
         private Label lblNombreAutor;
         private TextBox txtIdAutor;
         private TextBox txtNombreAutor;
+        private Label lblNacionalidadAutor;
+        private TextBox txtNacionalidadAutor;
         private Label label2;
         private Label lblRolAutor;
         private Button btnNuevoAutor;
@@ -603,6 +639,7 @@ namespace BibliotecaUniversitaria.Forms
         private DataGridViewTextBoxColumn Column2;
         private DataGridViewTextBoxColumn Column3;
         private DataGridViewTextBoxColumn Column4;
+        private DataGridViewTextBoxColumn Column6;
         private Label label3;
         private Button btnGuardarAutor;
         private Button btnEditarAutor;

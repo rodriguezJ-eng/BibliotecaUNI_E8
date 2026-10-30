@@ -2,23 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using CapaNegocio;
 using Entidades;
 
 namespace BibliotecaUniversitaria.Forms
 {
     public partial class frmGestionPrestamos : Form
     {
-        /// <summary>
-        /// Préstamos registrados. Static por la misma razón que Lectores en
-        /// frmRegistroLector: debe sobrevivir a que esta ventana se cierre y se
-        /// vuelva a abrir con una instancia nueva desde frmMenu.
-        /// </summary>
-        public static List<Prestamo> Prestamos { get; } = new List<Prestamo>();
+        private readonly PrestamoNegocio prestamoNegocio = new PrestamoNegocio();
+        private readonly LectorNegocio lectorNegocio = new LectorNegocio();
+        private readonly EjemplarNegocio ejemplarNegocio = new EjemplarNegocio();
 
-        private static int _siguienteIdPrestamo = 1;
-
-        /// <summary>Tarifa de multa en córdobas por cada día de atraso en la devolución.</summary>
-        private const decimal TarifaPorDiaAtraso = 5m;
+        private List<Prestamo> prestamos = new List<Prestamo>();
 
         public frmGestionPrestamos()
         {
@@ -30,52 +25,64 @@ namespace BibliotecaUniversitaria.Forms
             dtpFechaPrestamo.Value = DateTime.Today;
             dtpFechaDevolucion.Enabled = false;
 
-            CargarEjemplaresEnCombo();
+            txtDiasCredito.Text = "7";
 
-            CargarPrestamosEnGrid(Prestamos);
+            CargarEjemplaresEnCombo();
+            CargarPrestamosDesdeBD();
         }
 
         /// <summary>
-        /// Carga en cmbEjemplar únicamente los ejemplares en estado "Disponible".
-        /// Los ejemplares ahora se administran en la base de datos (ver
-        /// frmRegistroEjemplar / EjemplarNegocio), por lo que se consultan desde
-        /// allí; el título del libro ya viene incluido en cada Ejemplar.
+        /// Carga en cmbEjemplar únicamente los ejemplares disponibles que
+        /// entrega la capa de negocio (base de datos).
         /// </summary>
         private void CargarEjemplaresEnCombo()
         {
             cmbEjemplar.Items.Clear();
 
-            var ejemplaresDisponibles = frmRegistroEjemplar.ObtenerEjemplaresDisponibles();
-
-            foreach (var ej in ejemplaresDisponibles)
+            try
             {
-                // Agregamos el formato: [Código Ejemplar] - Título Libro
-                cmbEjemplar.Items.Add($"{ej.Codigo} - {ej.TituloLibro}");
+                List<Ejemplar> ejemplaresDisponibles = ejemplarNegocio.ConsultarDisponibles();
+
+                foreach (Ejemplar ejemplar in ejemplaresDisponibles)
+                {
+                    cmbEjemplar.Items.Add(new EjemplarOpcion(ejemplar));
+                }
+
+                if (cmbEjemplar.Items.Count > 0)
+                    cmbEjemplar.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar los ejemplares disponibles: " + ex.Message,
+                    "Gestión de Préstamos", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-
+        private Ejemplar ObtenerEjemplarSeleccionado()
+        {
+            EjemplarOpcion opcion = cmbEjemplar.SelectedItem as EjemplarOpcion;
+            return opcion != null ? opcion.Ejemplar : null;
+        }
 
         /// <summary>
-        /// Busca al lector por su ID en frmRegistroLector.Lectores. Si no existe,
-        /// abre esa ventana (modal) para registrarlo; al cerrarla, vuelve a buscarlo.
-        /// Devuelve null si el usuario cerró la ventana sin registrar al lector.
+        /// Busca al lector por su identificación en la base de datos. Si no
+        /// existe, abre la ventana de registro y vuelve a consultarlo.
         /// </summary>
         private Lector BuscarORegistrarLector(string idLector)
         {
-            var lector = frmRegistroLector.Lectores.FirstOrDefault(l => l.IdLector == idLector);
+            Lector lector = lectorNegocio.BuscarPorIdentificador(idLector);
             if (lector != null) return lector;
 
             MessageBox.Show(
                 "No se encontró un lector con ese ID. Se abrirá la ventana de registro.",
                 "Lector no encontrado", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            using (var frmLector = new frmRegistroLector { IdLectorSugerido = idLector })
+            using (frmRegistroLector frmLector = new frmRegistroLector { IdLectorSugerido = idLector })
             {
                 frmLector.ShowDialog();
             }
 
-            lector = frmRegistroLector.Lectores.FirstOrDefault(l => l.IdLector == idLector);
+            lector = lectorNegocio.BuscarPorIdentificador(idLector);
             if (lector == null)
             {
                 MessageBox.Show(
@@ -86,25 +93,34 @@ namespace BibliotecaUniversitaria.Forms
             return lector;
         }
 
-
-
-       
+        private void CargarPrestamosDesdeBD()
+        {
+            try
+            {
+                prestamos = prestamoNegocio.ConsultarTodos();
+                CargarPrestamosEnGrid(FiltrarPrestamos());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar los préstamos: " + ex.Message,
+                    "Gestión de Préstamos", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
         private List<Prestamo> FiltrarPrestamos()
         {
             DateTime hoy = DateTime.Today;
 
-            // La "expresión switch" (x switch { ... }) es de C# 8: en C# 7.3 se usa el switch de siempre.
             switch (cmbPrestamos.SelectedItem?.ToString())
             {
                 case "Activos":
-                    return Prestamos.Where(p => p.Estado == "Activo" && p.FechaDevolucion >= hoy).ToList();
+                    return prestamos.Where(p => p.Estado == "Activo" && p.FechaDevolucion >= hoy).ToList();
                 case "Devueltos":
-                    return Prestamos.Where(p => p.Estado == "Devuelto").ToList();
+                    return prestamos.Where(p => p.Estado == "Devuelto").ToList();
                 case "Atrasados":
-                    return Prestamos.Where(p => p.Estado == "Activo" && p.FechaDevolucion < hoy).ToList();
+                    return prestamos.Where(p => p.Estado == "Activo" && p.FechaDevolucion < hoy).ToList();
                 default:
-                    return Prestamos.ToList();
+                    return prestamos.ToList();
             }
         }
 
@@ -112,25 +128,29 @@ namespace BibliotecaUniversitaria.Forms
         {
             dgvPrestamos.Rows.Clear();
 
-            foreach (var p in lista)
+            foreach (Prestamo p in lista)
             {
                 string estadoMostrado = p.Estado == "Activo" && p.FechaDevolucion < DateTime.Today
                     ? "Atrasado"
                     : p.Estado;
 
-                dgvPrestamos.Rows.Add(
+                int indice = dgvPrestamos.Rows.Add(
                     p.Id,
                     p.NombreLector,
                     p.Ejemplar,
                     p.FechaPrestamo.ToShortDateString(),
                     p.FechaDevolucion.ToShortDateString(),
                     estadoMostrado);
+
+                dgvPrestamos.Rows[indice].Tag = p;
             }
+
+            dgvPrestamos.ClearSelection();
+            dgvPrestamos.CurrentCell = null;
         }
 
         private void cmbEjemplar_SelectedIndexChanged(object sender, EventArgs e)
         {
-
         }
 
         private void btnBuscarLector_Click(object sender, EventArgs e)
@@ -143,24 +163,32 @@ namespace BibliotecaUniversitaria.Forms
                 return;
             }
 
-            var lector = frmRegistroLector.Lectores.FirstOrDefault(l => l.IdLector == idLector);
-            if (lector != null)
+            try
             {
-                MessageBox.Show($"Lector encontrado: {lector.NombreCompleto} ({lector.Tipo}).",
-                    "Buscar lector", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            var respuesta = MessageBox.Show(
-                "No existe un lector con ese ID. ¿Desea registrarlo ahora?",
-                "Lector no encontrado", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (respuesta == DialogResult.Yes)
-            {
-                using (var frmLector = new frmRegistroLector { IdLectorSugerido = idLector })
+                Lector lector = lectorNegocio.BuscarPorIdentificador(idLector);
+                if (lector != null)
                 {
-                    frmLector.ShowDialog();
+                    MessageBox.Show("Lector encontrado: " + lector.NombreCompleto + " (" + lector.Tipo + ").",
+                        "Buscar lector", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
                 }
+
+                DialogResult respuesta = MessageBox.Show(
+                    "No existe un lector con ese ID. ¿Desea registrarlo ahora?",
+                    "Lector no encontrado", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (respuesta == DialogResult.Yes)
+                {
+                    using (frmRegistroLector frmLector = new frmRegistroLector { IdLectorSugerido = idLector })
+                    {
+                        frmLector.ShowDialog();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Buscar lector",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -174,57 +202,51 @@ namespace BibliotecaUniversitaria.Forms
             }
 
             int id = Convert.ToInt32(dgvPrestamos.CurrentRow.Cells["IDPrestamo"].Value);
-            var prestamo = Prestamos.FirstOrDefault(p => p.Id == id);
-            if (prestamo == null) return;
 
-            if (prestamo.Estado == "Devuelto")
+            try
             {
-                MessageBox.Show("Este préstamo ya fue devuelto.", "Gestión de Préstamos",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
+                ResultadoDevolucion resultado = prestamoNegocio.Devolver(id);
 
-            DateTime hoy = DateTime.Today;
-            int diasAtraso = (hoy - prestamo.FechaDevolucion).Days;
-
-            prestamo.Estado = "Devuelto";
-
-            if (diasAtraso > 0)
-            {
-                decimal monto = diasAtraso * TarifaPorDiaAtraso;
-
-                frmGestionMultas.Multas.Add(new Multa
+                if (resultado.DiasAtraso > 0)
                 {
-                    Id = frmGestionMultas.SiguienteIdMulta(),
-                    IdPrestamo = prestamo.Id,
-                    Lector = prestamo.NombreLector,
-                    Monto = monto,
-                    Estado = "Pendiente",
-                    FechaGeneracion = hoy
-                });
+                    string mensaje = "El préstamo tenía " + resultado.DiasAtraso + " día(s) de atraso.";
 
-                MessageBox.Show(
-                    $"El préstamo tenía {diasAtraso} día(s) de atraso.\nSe generó una multa de C${monto:0.00}.",
-                    "Multa generada", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    if (resultado.MultaGenerada)
+                    {
+                        mensaje += "\nSe generó una multa de C$" + resultado.MontoMulta.ToString("0.00") + ".";
+                    }
+                    else if (!string.IsNullOrWhiteSpace(resultado.ErrorMulta))
+                    {
+                        mensaje += "\nNo fue posible registrar la multa: " + resultado.ErrorMulta;
+                    }
+
+                    MessageBox.Show(mensaje, "Multa generada",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                else
+                {
+                    MessageBox.Show("Devolución registrada dentro del plazo.", "Gestión de Préstamos",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+
+                CargarEjemplaresEnCombo();
+                CargarPrestamosDesdeBD();
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Devolución registrada dentro del plazo.", "Gestión de Préstamos",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(ex.Message, "Gestión de Préstamos",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            CargarPrestamosEnGrid(FiltrarPrestamos());
         }
 
         private void btnBuscar_Click(object sender, EventArgs e)
         {
-            CargarPrestamosEnGrid(FiltrarPrestamos());
+            CargarPrestamosDesdeBD();
         }
 
         private void btnRegistroPrestamo_Click(object sender, EventArgs e)
         {
             string idLector = txtIdLector.Text.Trim();
-            string ejemplar = cmbEjemplar.Text.Trim();
 
             if (string.IsNullOrWhiteSpace(idLector))
             {
@@ -233,9 +255,10 @@ namespace BibliotecaUniversitaria.Forms
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(ejemplar))
+            Ejemplar ejemplar = ObtenerEjemplarSeleccionado();
+            if (ejemplar == null)
             {
-                MessageBox.Show("Ingrese el ejemplar a prestar.", "Gestión de Préstamos",
+                MessageBox.Show("Seleccione el ejemplar a prestar.", "Gestión de Préstamos",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -249,39 +272,62 @@ namespace BibliotecaUniversitaria.Forms
 
             Lector lector = BuscarORegistrarLector(idLector);
             if (lector == null)
-            {
-                // El usuario cerró la ventana de registro sin completar el registro del lector.
                 return;
-            }
 
             DateTime fechaPrestamo = dtpFechaPrestamo.Value.Date;
             DateTime fechaDevolucion = fechaPrestamo.AddDays(diasCredito);
 
-            var prestamo = new Prestamo
+            try
             {
-                Id = _siguienteIdPrestamo++,
-                IdLector = lector.IdLector,
-                NombreLector = lector.NombreCompleto,
-                Ejemplar = ejemplar,
-                FechaPrestamo = fechaPrestamo,
-                DiasCredito = diasCredito,
-                FechaDevolucion = fechaDevolucion,
-                Estado = "Activo"
-            };
-            Prestamos.Add(prestamo);
+                Prestamo prestamo = new Prestamo
+                {
+                    IDLectores = lector.IDLectores,
+                    IDEjemplar = ejemplar.IDEjemplar,
+                    IdLector = lector.IdLector,
+                    NombreLector = lector.NombreCompleto,
+                    Ejemplar = ejemplar.Codigo + " - " + ejemplar.TituloLibro,
+                    FechaPrestamo = fechaPrestamo,
+                    DiasCredito = diasCredito,
+                    FechaDevolucion = fechaDevolucion,
+                    Estado = "Activo"
+                };
 
-            dtpFechaDevolucion.Value = fechaDevolucion;
-            CargarPrestamosEnGrid(FiltrarPrestamos());
+                prestamoNegocio.Registrar(prestamo);
 
-            MessageBox.Show(
-                $"Préstamo registrado para {lector.NombreCompleto}." +
-                $"\nFecha de devolución: {fechaDevolucion:dd/MM/yyyy}.",
-                "Gestión de Préstamos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                dtpFechaDevolucion.Value = fechaDevolucion;
+                CargarEjemplaresEnCombo();
+                CargarPrestamosDesdeBD();
+
+                MessageBox.Show(
+                    "Préstamo registrado para " + lector.NombreCompleto + "." +
+                    "\nFecha de devolución: " + fechaDevolucion.ToString("dd/MM/yyyy") + ".",
+                    "Gestión de Préstamos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Gestión de Préstamos",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void dtpFechaDevolucion_ValueChanged(object sender, EventArgs e)
         {
+        }
 
+        /// <summary>Elemento del combo de ejemplares que conserva el objeto Ejemplar.</summary>
+        private sealed class EjemplarOpcion
+        {
+            public EjemplarOpcion(Ejemplar ejemplar)
+            {
+                Ejemplar = ejemplar;
+            }
+
+            public Ejemplar Ejemplar { get; }
+
+            public override string ToString()
+            {
+                return Ejemplar.Codigo + " - " + Ejemplar.TituloLibro;
+            }
         }
     }
 }

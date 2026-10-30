@@ -222,7 +222,7 @@ namespace BibliotecaUniversitaria.Forms
             this.lblPrestamos.Name = "lblPrestamos";
             this.lblPrestamos.Size = new System.Drawing.Size(142, 23);
             this.lblPrestamos.TabIndex = 0;
-            this.lblPrestamos.Text = "Buscar Préstamo";
+            this.lblPrestamos.Text = "Buscar PrÃ©stamo";
             // 
             // cmbPrestamos
             // 
@@ -253,8 +253,11 @@ namespace BibliotecaUniversitaria.Forms
             this.dataGridViewTextBoxColumn4,
             this.dataGridViewTextBoxColumn5});
             this.dgvPrestamos.Location = new System.Drawing.Point(23, 96);
+            this.dgvPrestamos.MultiSelect = false;
             this.dgvPrestamos.Name = "dgvPrestamos";
+            this.dgvPrestamos.ReadOnly = true;
             this.dgvPrestamos.RowHeadersWidth = 51;
+            this.dgvPrestamos.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvPrestamos.Size = new System.Drawing.Size(823, 234);
             this.dgvPrestamos.TabIndex = 3;
             // 

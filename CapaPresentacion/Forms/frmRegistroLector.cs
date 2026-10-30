@@ -1,59 +1,66 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows.Forms;
+using CapaNegocio;
 using Entidades;
 
 namespace BibliotecaUniversitaria.Forms
 {
     public partial class frmRegistroLector : Form
     {
-        /// <summary>
-        /// Lectores registrados en el sistema. Es "static" a propósito: pertenece a la
-        /// CLASE frmRegistroLector, no a una ventana en particular, así que sigue viva
-        /// mientras la aplicación esté corriendo, aunque esta ventana se cierre y frmMenu
-        /// cree una instancia nueva la próxima vez que se abra. Si fuera una lista de
-        /// instancia (un "public List<Lector>" normal, sin static), cada
-        /// "using var frm = new frmRegistroLector()" tendría su propia lista vacía y, al
-        /// cerrar la ventana y perderse la referencia a esa instancia, esos datos se
-        /// perderían
-        /// </summary>
-        public static List<Lector> Lectores { get; } = new List<Lector>();
+        private readonly LectorNegocio lectorNegocio = new LectorNegocio();
+        private bool cargandoLectores = false;
 
-        /// <summary>ID de lector con el que se abre esta ventana (por ejemplo, desde Préstamos).</summary>
+        /// <summary>ID de lector con el que se abre esta ventana (por ejemplo, desde PrÃ©stamos).</summary>
         public string IdLectorSugerido { get; set; } = string.Empty;
 
         public frmRegistroLector()
         {
             InitializeComponent();
-            dgvUsuarios.CellClick += DgvUsuarios_CellClick;
-            CargarLectoresEnGrid();
+            dgvUsuarios.SelectionChanged += DgvUsuarios_SelectionChanged;
         }
 
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
 
+            CargarLectoresEnGrid();
+
             if (!string.IsNullOrWhiteSpace(IdLectorSugerido))
             {
+                dgvUsuarios.ClearSelection();
                 txtIdLector.Text = IdLectorSugerido;
             }
         }
 
-        private void DgvUsuarios_CellClick(object sender, DataGridViewCellEventArgs e)
+        private void DgvUsuarios_SelectionChanged(object sender, EventArgs e)
         {
-            if (e.RowIndex < 0) return;
+            if (cargandoLectores || dgvUsuarios.CurrentRow == null) return;
 
-            var fila = dgvUsuarios.Rows[e.RowIndex];
-            txtIdLector.Text = fila.Cells[0].Value?.ToString();
-            txtNombres.Text = fila.Cells[1].Value?.ToString();
-            txtApellidos.Text = fila.Cells[2].Value?.ToString();
-            txtTelefono.Text = fila.Cells[3].Value?.ToString();
-            txtCorreo.Text = fila.Cells[4].Value?.ToString();
-            txtCarrera.Text = fila.Cells[5].Value?.ToString();
-            txtTipo.Text = fila.Cells[6].Value?.ToString();
+            Lector lector = dgvUsuarios.CurrentRow.Tag as Lector;
+            if (lector == null) return;
+
+            MostrarLector(lector);
         }
 
+        private void MostrarLector(Lector lector)
+        {
+            txtIdLector.Text = lector.IdLector;
+            txtNombres.Text = lector.Nombres;
+            txtApellidos.Text = lector.Apellidos;
+            txtTelefono.Text = lector.Telefono;
+            txtCorreo.Text = lector.Correo;
+            txtCarrera.Text = lector.Carrera;
+            txtTipo.Text = lector.Tipo;
+        }
+
+        private Lector ObtenerLectorSeleccionado()
+        {
+            if (dgvUsuarios.CurrentRow == null)
+                return null;
+
+            return dgvUsuarios.CurrentRow.Tag as Lector;
+        }
 
         private bool ValidarCampos()
         {
@@ -65,6 +72,15 @@ namespace BibliotecaUniversitaria.Forms
                     "Registro de lectores", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
+
+            if (string.IsNullOrWhiteSpace(txtCorreo.Text))
+            {
+                MessageBox.Show("El correo del lector es obligatorio.",
+                    "Registro de lectores", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtCorreo.Focus();
+                return false;
+            }
+
             return true;
         }
 
@@ -77,15 +93,59 @@ namespace BibliotecaUniversitaria.Forms
             txtCorreo.Clear();
             txtCarrera.Clear();
             txtTipo.Clear();
+            dgvUsuarios.ClearSelection();
         }
 
         private void CargarLectoresEnGrid()
         {
-            dgvUsuarios.Rows.Clear();
-            foreach (var l in Lectores)
+            cargandoLectores = true;
+
+            try
             {
-                dgvUsuarios.Rows.Add(l.IdLector, l.Nombres, l.Apellidos, l.Telefono, l.Correo, l.Carrera, l.Tipo);
+                List<Lector> lectores = lectorNegocio.ConsultarTodos();
+
+                dgvUsuarios.Rows.Clear();
+                foreach (Lector lector in lectores)
+                {
+                    int indice = dgvUsuarios.Rows.Add(
+                        lector.IdLector,
+                        lector.Nombres,
+                        lector.Apellidos,
+                        lector.Telefono,
+                        lector.Correo,
+                        lector.Carrera,
+                        lector.Tipo);
+
+                    dgvUsuarios.Rows[indice].Tag = lector;
+                }
+
+                dgvUsuarios.ClearSelection();
+                dgvUsuarios.CurrentCell = null;
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar los lectores: " + ex.Message,
+                    "Registro de lectores", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                cargandoLectores = false;
+            }
+        }
+
+        private Lector ConstruirLector(int idLectores)
+        {
+            return new Lector
+            {
+                IDLectores = idLectores,
+                IdLector = txtIdLector.Text.Trim(),
+                Nombres = txtNombres.Text.Trim(),
+                Apellidos = txtApellidos.Text.Trim(),
+                Telefono = txtTelefono.Text.Trim(),
+                Correo = txtCorreo.Text.Trim(),
+                Carrera = txtCarrera.Text.Trim(),
+                Tipo = txtTipo.Text.Trim()
+            };
         }
 
         private void btnNuevo_Click(object sender, EventArgs e)
@@ -101,60 +161,62 @@ namespace BibliotecaUniversitaria.Forms
 
         private void btnEliminar_Click(object sender, EventArgs e)
         {
-            if (dgvUsuarios.CurrentRow == null)
+            Lector lector = ObtenerLectorSeleccionado();
+            if (lector == null)
             {
                 MessageBox.Show("Seleccione un lector de la lista.", "Registro de lectores",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            string idLector = dgvUsuarios.CurrentRow.Cells[0].Value?.ToString();
-            var lector = Lectores.FirstOrDefault(l => l.IdLector == idLector);
-            if (lector == null) return;
+            DialogResult respuesta = MessageBox.Show(
+                "Â¿Eliminar al lector " + lector.NombreCompleto + "?",
+                "Confirmar eliminaciÃ³n", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-            var respuesta = MessageBox.Show($"¿Eliminar al lector {lector.NombreCompleto}?",
-                "Confirmar eliminación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (respuesta != DialogResult.Yes) return;
 
-            Lectores.Remove(lector);
-            CargarLectoresEnGrid();
-            LimpiarCampos();
+            try
+            {
+                lectorNegocio.Eliminar(lector.IDLectores);
+                CargarLectoresEnGrid();
+                LimpiarCampos();
+
+                MessageBox.Show("Lector eliminado correctamente.", "Registro de lectores",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Registro de lectores",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)
         {
             if (!ValidarCampos()) return;
 
-            string idLector = txtIdLector.Text.Trim();
-
-            if (Lectores.Any(l => l.IdLector == idLector))
+            try
             {
-                MessageBox.Show("Ya existe un lector registrado con ese ID de lector.",
-                    "Registro de lectores", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                Lector lector = ConstruirLector(0);
+                lectorNegocio.Insertar(lector);
+
+                CargarLectoresEnGrid();
+                LimpiarCampos();
+
+                MessageBox.Show("Lector guardado.", "Registro de lectores",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-
-            Lectores.Add(new Lector
+            catch (Exception ex)
             {
-                IdLector = idLector,
-                Nombres = txtNombres.Text.Trim(),
-                Apellidos = txtApellidos.Text.Trim(),
-                Telefono = txtTelefono.Text.Trim(),
-                Correo = txtCorreo.Text.Trim(),
-                Carrera = txtCarrera.Text.Trim(),
-                Tipo = txtTipo.Text.Trim()
-            });
-
-            CargarLectoresEnGrid();
-            LimpiarCampos();
-
-            MessageBox.Show("Lector guardado.", "Registro de lectores",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(ex.Message, "Registro de lectores",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnEditar_Click(object sender, EventArgs e)
         {
-            if (dgvUsuarios.CurrentRow == null)
+            Lector seleccionado = ObtenerLectorSeleccionado();
+            if (seleccionado == null)
             {
                 MessageBox.Show("Seleccione un lector de la lista.", "Registro de lectores",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -163,19 +225,22 @@ namespace BibliotecaUniversitaria.Forms
 
             if (!ValidarCampos()) return;
 
-            string idLectorOriginal = dgvUsuarios.CurrentRow.Cells[0].Value?.ToString();
-            var lector = Lectores.FirstOrDefault(l => l.IdLector == idLectorOriginal);
-            if (lector == null) return;
+            try
+            {
+                Lector lector = ConstruirLector(seleccionado.IDLectores);
+                lectorNegocio.Actualizar(lector);
 
-            lector.IdLector = txtIdLector.Text.Trim();
-            lector.Nombres = txtNombres.Text.Trim();
-            lector.Apellidos = txtApellidos.Text.Trim();
-            lector.Telefono = txtTelefono.Text.Trim();
-            lector.Correo = txtCorreo.Text.Trim();
-            lector.Carrera = txtCarrera.Text.Trim();
-            lector.Tipo = txtTipo.Text.Trim();
+                CargarLectoresEnGrid();
+                LimpiarCampos();
 
-            CargarLectoresEnGrid();
+                MessageBox.Show("Lector actualizado correctamente.", "Registro de lectores",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Registro de lectores",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

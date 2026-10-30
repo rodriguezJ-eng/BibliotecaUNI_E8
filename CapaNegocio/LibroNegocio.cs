@@ -1,49 +1,31 @@
 using System;
-using Entidades;
 using System.Collections.Generic;
-using System.Linq;
-using LibroEntidad = Entidades.Libro;
 using CapaDatos;
+using LibroEntidad = Entidades.Libro;
+using AutorEntidad = Entidades.Autor;
 
 namespace CapaNegocio
 {
+    /// <summary>
+    /// Reglas de negocio de Libro. Toda la persistencia se delega en
+    /// LibroDatos (Entity Framework 6), incluyendo la relación con Autor
+    /// (tabla LibroAutor) y la categoría (tabla Categoria).
+    /// </summary>
     public class LibroNegocio
     {
-        private LibroDatos libroDatos = new LibroDatos();
-
-        private static readonly List<LibroEntidad> catalogo = new List<LibroEntidad>
-        {
-            new LibroEntidad { IDLibro = 1,  Titulo = "Matemáticas Aplicadas a la Ingeniería" },
-            new LibroEntidad { IDLibro = 2,  Titulo = "El prodigio de los números : desafíos, paradojas y curiosidades matemáticas" },
-            new LibroEntidad { IDLibro = 3,  Titulo = "Matemática básica" },
-            new LibroEntidad { IDLibro = 4,  Titulo = "Matemáticas aplicadas : para administración, economía y ciencias sociales" },
-            new LibroEntidad { IDLibro = 5,  Titulo = "Fundamentos de programación : algoritmos y estructuras de datos" },
-            new LibroEntidad { IDLibro = 6,  Titulo = "Introducción a la programación estructurada en C." },
-            new LibroEntidad { IDLibro = 7,  Titulo = "Metodología y tecnología de la programación." },
-            new LibroEntidad { IDLibro = 8,  Titulo = "Mecánica para ingeniería: dinámica" },
-            new LibroEntidad { IDLibro = 9,  Titulo = "Mecánica de fluidos para ingenieros" },
-            new LibroEntidad { IDLibro = 10, Titulo = "Redes de Computadoras" }
-        };
-
-        private static int siguienteId = catalogo.Max(l => l.IDLibro) + 1;
+        private readonly LibroDatos datos = new LibroDatos();
 
         public List<LibroEntidad> ConsultarTodos()
         {
-            try
-            {
-                List<LibroEntidad> libros = libroDatos.ConsultarTodos();
-                if (libros != null && libros.Count > 0)
-                    return libros;
-            }
-            catch
-            {
-            }
-            return new List<LibroEntidad>(catalogo);
+            return datos.ConsultarTodos();
         }
 
         public LibroEntidad BuscarPorId(int idLibro)
         {
-            return catalogo.Find(l => l.IDLibro == idLibro);
+            if (idLibro <= 0)
+                return null;
+
+            return datos.Buscar(idLibro);
         }
 
         public bool ExisteIsbn(string isbn, int idExcluido = 0)
@@ -51,119 +33,91 @@ namespace CapaNegocio
             if (string.IsNullOrWhiteSpace(isbn))
                 return false;
 
-            return catalogo.Any(l => l.IDLibro != idExcluido &&
-                                      !string.IsNullOrEmpty(l.ISBN) &&
-                                      l.ISBN.Equals(isbn.Trim(), StringComparison.OrdinalIgnoreCase));
+            return datos.ExisteIsbn(isbn.Trim(), idExcluido);
         }
 
-        private void Validar(LibroEntidad libro)
+        public List<string> ConsultarCategorias()
         {
-            if (libro == null)
-                throw new Exception("El libro no puede ser nulo.");
+            return datos.ConsultarCategorias();
+        }
 
-            if (string.IsNullOrWhiteSpace(libro.Titulo))
-                throw new Exception("El título no puede estar vacío.");
-
-            if (libro.IDAutor <= 0)
-                throw new Exception("Debe seleccionar un autor válido.");
-
-            if (string.IsNullOrWhiteSpace(libro.ISBN))
-                throw new Exception("El ISBN es obligatorio.");
-
-            if (ExisteIsbn(libro.ISBN, libro.IDLibro))
-                throw new Exception("Ya existe un libro registrado con ese ISBN.");
+        public List<AutorEntidad> ConsultarAutores()
+        {
+            return datos.ConsultarAutores();
         }
 
         public void Insertar(LibroEntidad libro)
         {
             Validar(libro);
 
-            try
-            {
-                libroDatos.Insertar(libro);
-                // Sincronizar con catálogo en memoria
-                if (!catalogo.Any(c => c.IDLibro == libro.IDLibro))
-                {
-                    catalogo.Add(libro);
-                    if (libro.IDLibro >= siguienteId)
-                        siguienteId = libro.IDLibro + 1;
-                }
-            }
-            catch (Exception)
-            {
-                libro.IDLibro = siguienteId++;
-                if (string.IsNullOrEmpty(libro.AutorNombre) && libro.Autor != null)
-                    libro.AutorNombre = libro.Autor.NombreCompleto;
-                catalogo.Add(libro);
-                throw;
-            }
+            if (datos.ExisteIsbn(libro.ISBN))
+                throw new InvalidOperationException("Ya existe un libro registrado con ese ISBN.");
+
+            datos.Insertar(libro);
         }
 
         public void Actualizar(LibroEntidad libro)
         {
             if (libro == null)
-                throw new Exception("El libro no puede ser nulo.");
+                throw new InvalidOperationException("El libro no puede ser nulo.");
+
+            if (libro.IDLibro <= 0)
+                throw new InvalidOperationException("Debe seleccionar el libro que desea actualizar.");
 
             Validar(libro);
 
-            LibroEntidad existente = catalogo.Find(l => l.IDLibro == libro.IDLibro);
+            if (datos.ExisteIsbn(libro.ISBN, libro.IDLibro))
+                throw new InvalidOperationException("Ya existe otro libro registrado con ese ISBN.");
 
-            try
-            {
-                libroDatos.Actualizar(libro);
-            }
-            catch (Exception)
-            {
-                // Sin acceso a la base de datos solo se puede actualizar el catálogo en memoria.
-                if (existente == null)
-                    throw;
-            }
-
-            if (existente != null)
-            {
-                existente.ISBN = libro.ISBN;
-                existente.Titulo = libro.Titulo;
-                existente.IDAutor = libro.IDAutor;
-                if (libro.Autor != null)
-                    existente.Autor = libro.Autor;
-                existente.AutorNombre = libro.AutorNombre ?? (libro.Autor != null ? libro.Autor.NombreCompleto : existente.AutorNombre);
-                existente.Categoria = libro.Categoria;
-                existente.Anio = libro.Anio;
-                existente.Edicion = libro.Edicion;
-                existente.Editorial = libro.Editorial;
-            }
+            datos.Actualizar(libro);
         }
 
         public void Eliminar(int idLibro)
         {
-            LibroEntidad existente = catalogo.Find(l => l.IDLibro == idLibro);
+            if (idLibro <= 0)
+                throw new InvalidOperationException("Debe seleccionar el libro que desea eliminar.");
 
-            try
-            {
-                libroDatos.Eliminar(idLibro);
-            }
-            catch (Exception)
-            {
-                // Sin acceso a la base de datos solo se puede eliminar del catálogo en memoria.
-                if (existente == null)
-                    throw;
-            }
-
-            if (existente != null)
-                catalogo.Remove(existente);
+            datos.Eliminar(idLibro);
         }
 
-        public List<Entidades.Autor> ConsultarAutores()
+        private static void Validar(LibroEntidad libro)
         {
-            try
-            {
-                AutorDatos autorDatos = new AutorDatos();
-                return autorDatos.ConsultarTodos();
-            }
-            catch
-            {
-                return new List<Entidades.Autor>();
-            }
+            if (libro == null)
+                throw new InvalidOperationException("El libro no puede ser nulo.");
+
+            libro.ISBN = (libro.ISBN ?? string.Empty).Trim();
+            libro.Titulo = (libro.Titulo ?? string.Empty).Trim();
+            libro.Editorial = (libro.Editorial ?? string.Empty).Trim();
+            libro.Edicion = (libro.Edicion ?? string.Empty).Trim();
+            libro.Categoria = (libro.Categoria ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(libro.Titulo))
+                throw new InvalidOperationException("El título no puede estar vacío.");
+
+            if (libro.Titulo.Length > 200)
+                throw new InvalidOperationException("El título no puede tener más de 200 caracteres.");
+
+            if (string.IsNullOrWhiteSpace(libro.ISBN))
+                throw new InvalidOperationException("El ISBN es obligatorio.");
+
+            if (libro.ISBN.Length > 20)
+                throw new InvalidOperationException("El ISBN no puede tener más de 20 caracteres.");
+
+            if (libro.IDAutor <= 0)
+                throw new InvalidOperationException("Debe seleccionar un autor válido.");
+
+            if (libro.Editorial.Length > 150)
+                throw new InvalidOperationException("La editorial no puede tener más de 150 caracteres.");
+
+            if (libro.Categoria.Length > 50)
+                throw new InvalidOperationException("La categoría no puede tener más de 50 caracteres.");
+
+            if (libro.Anio < 0 || libro.Anio > DateTime.Today.Year + 1)
+                throw new InvalidOperationException("El año del libro no es válido.");
+
+            int edicion;
+            if (!string.IsNullOrWhiteSpace(libro.Edicion) && !int.TryParse(libro.Edicion, out edicion))
+                throw new InvalidOperationException("La edición debe ser un número entero.");
         }
     }
 }

@@ -35,6 +35,7 @@ namespace BibliotecaUniversitaria.Forms
             this.txtIdMultaSeleccionada = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.btnMarcarPagada = new System.Windows.Forms.Button();
+            this.btnEliminar = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvMultas)).BeginInit();
             this.SuspendLayout();
             // 
@@ -66,8 +67,11 @@ namespace BibliotecaUniversitaria.Forms
             this.dataGridViewTextBoxColumn4,
             this.dataGridViewTextBoxColumn5});
             this.dgvMultas.Location = new System.Drawing.Point(34, 80);
+            this.dgvMultas.MultiSelect = false;
             this.dgvMultas.Name = "dgvMultas";
+            this.dgvMultas.ReadOnly = true;
             this.dgvMultas.RowHeadersWidth = 51;
+            this.dgvMultas.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvMultas.Size = new System.Drawing.Size(773, 278);
             this.dgvMultas.TabIndex = 2;
             // 
@@ -109,7 +113,7 @@ namespace BibliotecaUniversitaria.Forms
             // 
             // dataGridViewTextBoxColumn5
             // 
-            this.dataGridViewTextBoxColumn5.HeaderText = "Fecha Generación";
+            this.dataGridViewTextBoxColumn5.HeaderText = "Fecha GeneraciÃ³n";
             this.dataGridViewTextBoxColumn5.MinimumWidth = 6;
             this.dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
             this.dataGridViewTextBoxColumn5.Width = 125;
@@ -153,6 +157,17 @@ namespace BibliotecaUniversitaria.Forms
             this.btnMarcarPagada.UseVisualStyleBackColor = true;
             this.btnMarcarPagada.Click += new System.EventHandler(this.btnMarcarPagada_Click);
             // 
+            // btnEliminar
+            // 
+            this.btnEliminar.Location = new System.Drawing.Point(570, 391);
+            this.btnEliminar.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnEliminar.Name = "btnEliminar";
+            this.btnEliminar.Size = new System.Drawing.Size(150, 34);
+            this.btnEliminar.TabIndex = 10;
+            this.btnEliminar.Text = "Eliminar";
+            this.btnEliminar.UseVisualStyleBackColor = true;
+            this.btnEliminar.Click += new System.EventHandler(this.btnEliminar_Click);
+            // 
             // frmGestionMultas
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -160,6 +175,7 @@ namespace BibliotecaUniversitaria.Forms
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(213)))), ((int)(((byte)(234)))), ((int)(((byte)(248)))));
             this.ClientSize = new System.Drawing.Size(834, 458);
             this.Controls.Add(this.btnMarcarPagada);
+            this.Controls.Add(this.btnEliminar);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.txtIdMultaSeleccionada);
             this.Controls.Add(this.label1);
@@ -184,5 +200,6 @@ namespace BibliotecaUniversitaria.Forms
         private TextBox txtIdMultaSeleccionada;
         private Label label2;
         private Button btnMarcarPagada;
+        private Button btnEliminar;
     }
 }

@@ -19,6 +19,7 @@ namespace Entidades
         public string AutorNombre { get; set; } = string.Empty;
 
         public string Categoria { get; set; } = string.Empty;
+        public int IDCategoria { get; set; }
         public int Anio { get; set; }
         public string Edicion { get; set; } = string.Empty;
         public string Editorial { get; set; } = string.Empty;
