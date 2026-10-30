@@ -27,130 +27,138 @@ namespace BibliotecaUniversitaria.Forms
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMenu));
-            btnLibros = new Button();
-            btnEjemplares = new Button();
-            btnUsuarios = new Button();
-            btnPrestamos = new Button();
-            btnMultas = new Button();
-            btnReportes = new Button();
-            btnAyuda = new Button();
-            SuspendLayout();
+            this.btnLibros = new System.Windows.Forms.Button();
+            this.btnEjemplares = new System.Windows.Forms.Button();
+            this.btnUsuarios = new System.Windows.Forms.Button();
+            this.btnPrestamos = new System.Windows.Forms.Button();
+            this.btnMultas = new System.Windows.Forms.Button();
+            this.btnReportes = new System.Windows.Forms.Button();
+            this.btnAyuda = new System.Windows.Forms.Button();
+            this.SuspendLayout();
             // 
             // btnLibros
             // 
-            btnLibros.BackColor = Color.WhiteSmoke;
-            btnLibros.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnLibros.Image = (Image)resources.GetObject("btnLibros.Image");
-            btnLibros.Location = new Point(2, -2);
-            btnLibros.Name = "btnLibros";
-            btnLibros.Size = new Size(118, 108);
-            btnLibros.TabIndex = 0;
-            btnLibros.Text = "Registro Libros";
-            btnLibros.TextImageRelation = TextImageRelation.ImageAboveText;
-            btnLibros.UseVisualStyleBackColor = false;
-            btnLibros.Click += btnLibros_Click;
+            this.btnLibros.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.btnLibros.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnLibros.Image = ((System.Drawing.Image)(resources.GetObject("btnLibros.Image")));
+            this.btnLibros.Location = new System.Drawing.Point(2, -2);
+            this.btnLibros.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnLibros.Name = "btnLibros";
+            this.btnLibros.Size = new System.Drawing.Size(118, 86);
+            this.btnLibros.TabIndex = 0;
+            this.btnLibros.Text = "Registro Libros";
+            this.btnLibros.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnLibros.UseVisualStyleBackColor = false;
+            this.btnLibros.Click += new System.EventHandler(this.btnLibros_Click);
             // 
             // btnEjemplares
             // 
-            btnEjemplares.BackColor = Color.WhiteSmoke;
-            btnEjemplares.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnEjemplares.Image = (Image)resources.GetObject("btnEjemplares.Image");
-            btnEjemplares.Location = new Point(116, -2);
-            btnEjemplares.Name = "btnEjemplares";
-            btnEjemplares.Size = new Size(118, 108);
-            btnEjemplares.TabIndex = 1;
-            btnEjemplares.Text = "Registro Ejemplares";
-            btnEjemplares.TextImageRelation = TextImageRelation.ImageAboveText;
-            btnEjemplares.UseVisualStyleBackColor = false;
-            btnEjemplares.Click += btnEjemplares_Click;
+            this.btnEjemplares.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.btnEjemplares.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnEjemplares.Image = ((System.Drawing.Image)(resources.GetObject("btnEjemplares.Image")));
+            this.btnEjemplares.Location = new System.Drawing.Point(116, -2);
+            this.btnEjemplares.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnEjemplares.Name = "btnEjemplares";
+            this.btnEjemplares.Size = new System.Drawing.Size(118, 86);
+            this.btnEjemplares.TabIndex = 1;
+            this.btnEjemplares.Text = "Registro Ejemplares";
+            this.btnEjemplares.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnEjemplares.UseVisualStyleBackColor = false;
+            this.btnEjemplares.Click += new System.EventHandler(this.btnEjemplares_Click);
             // 
             // btnUsuarios
             // 
-            btnUsuarios.BackColor = Color.WhiteSmoke;
-            btnUsuarios.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnUsuarios.Image = (Image)resources.GetObject("btnUsuarios.Image");
-            btnUsuarios.Location = new Point(229, -2);
-            btnUsuarios.Name = "btnUsuarios";
-            btnUsuarios.Size = new Size(118, 108);
-            btnUsuarios.TabIndex = 2;
-            btnUsuarios.Text = "Registro Usuarios";
-            btnUsuarios.TextImageRelation = TextImageRelation.ImageAboveText;
-            btnUsuarios.UseVisualStyleBackColor = false;
-            btnUsuarios.Click += btnUsuarios_Click;
+            this.btnUsuarios.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.btnUsuarios.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnUsuarios.Image = ((System.Drawing.Image)(resources.GetObject("btnUsuarios.Image")));
+            this.btnUsuarios.Location = new System.Drawing.Point(229, -2);
+            this.btnUsuarios.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnUsuarios.Name = "btnUsuarios";
+            this.btnUsuarios.Size = new System.Drawing.Size(118, 86);
+            this.btnUsuarios.TabIndex = 2;
+            this.btnUsuarios.Text = "Registro Lectores";
+            this.btnUsuarios.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnUsuarios.UseVisualStyleBackColor = false;
+            this.btnUsuarios.Click += new System.EventHandler(this.btnUsuarios_Click_1);
             // 
             // btnPrestamos
             // 
-            btnPrestamos.BackColor = Color.WhiteSmoke;
-            btnPrestamos.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnPrestamos.Image = (Image)resources.GetObject("btnPrestamos.Image");
-            btnPrestamos.Location = new Point(342, -2);
-            btnPrestamos.Name = "btnPrestamos";
-            btnPrestamos.Size = new Size(118, 108);
-            btnPrestamos.TabIndex = 3;
-            btnPrestamos.Text = "Registro Préstamos";
-            btnPrestamos.TextImageRelation = TextImageRelation.ImageAboveText;
-            btnPrestamos.UseVisualStyleBackColor = false;
-            btnPrestamos.Click += btnPrestamos_Click;
+            this.btnPrestamos.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.btnPrestamos.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnPrestamos.Image = ((System.Drawing.Image)(resources.GetObject("btnPrestamos.Image")));
+            this.btnPrestamos.Location = new System.Drawing.Point(342, -2);
+            this.btnPrestamos.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnPrestamos.Name = "btnPrestamos";
+            this.btnPrestamos.Size = new System.Drawing.Size(118, 86);
+            this.btnPrestamos.TabIndex = 3;
+            this.btnPrestamos.Text = "Registro Préstamos";
+            this.btnPrestamos.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnPrestamos.UseVisualStyleBackColor = false;
+            this.btnPrestamos.Click += new System.EventHandler(this.btnPrestamos_Click);
             // 
             // btnMultas
             // 
-            btnMultas.BackColor = Color.WhiteSmoke;
-            btnMultas.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnMultas.Image = (Image)resources.GetObject("btnMultas.Image");
-            btnMultas.Location = new Point(454, -2);
-            btnMultas.Name = "btnMultas";
-            btnMultas.Size = new Size(118, 108);
-            btnMultas.TabIndex = 4;
-            btnMultas.Text = "Multas";
-            btnMultas.TextImageRelation = TextImageRelation.ImageAboveText;
-            btnMultas.UseVisualStyleBackColor = false;
-            btnMultas.Click += btnMultas_Click;
+            this.btnMultas.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.btnMultas.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnMultas.Image = ((System.Drawing.Image)(resources.GetObject("btnMultas.Image")));
+            this.btnMultas.Location = new System.Drawing.Point(454, -2);
+            this.btnMultas.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnMultas.Name = "btnMultas";
+            this.btnMultas.Size = new System.Drawing.Size(118, 86);
+            this.btnMultas.TabIndex = 4;
+            this.btnMultas.Text = "Multas";
+            this.btnMultas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnMultas.UseVisualStyleBackColor = false;
+            this.btnMultas.Click += new System.EventHandler(this.btnMultas_Click);
             // 
             // btnReportes
             // 
-            btnReportes.BackColor = Color.WhiteSmoke;
-            btnReportes.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnReportes.Image = (Image)resources.GetObject("btnReportes.Image");
-            btnReportes.Location = new Point(569, -2);
-            btnReportes.Name = "btnReportes";
-            btnReportes.Size = new Size(118, 108);
-            btnReportes.TabIndex = 5;
-            btnReportes.Text = "Reportes";
-            btnReportes.TextImageRelation = TextImageRelation.ImageAboveText;
-            btnReportes.UseVisualStyleBackColor = false;
-            btnReportes.Click += btnReportes_Click;
+            this.btnReportes.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.btnReportes.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnReportes.Image = ((System.Drawing.Image)(resources.GetObject("btnReportes.Image")));
+            this.btnReportes.Location = new System.Drawing.Point(569, -2);
+            this.btnReportes.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnReportes.Name = "btnReportes";
+            this.btnReportes.Size = new System.Drawing.Size(118, 86);
+            this.btnReportes.TabIndex = 5;
+            this.btnReportes.Text = "Reportes";
+            this.btnReportes.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnReportes.UseVisualStyleBackColor = false;
+            this.btnReportes.Click += new System.EventHandler(this.btnReportes_Click);
             // 
             // btnAyuda
             // 
-            btnAyuda.BackColor = Color.WhiteSmoke;
-            btnAyuda.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnAyuda.Image = (Image)resources.GetObject("btnAyuda.Image");
-            btnAyuda.Location = new Point(683, -2);
-            btnAyuda.Name = "btnAyuda";
-            btnAyuda.Size = new Size(118, 108);
-            btnAyuda.TabIndex = 6;
-            btnAyuda.Text = "Ayuda";
-            btnAyuda.TextImageRelation = TextImageRelation.ImageAboveText;
-            btnAyuda.UseVisualStyleBackColor = false;
-            btnAyuda.Click += btnAyuda_Click;
+            this.btnAyuda.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.btnAyuda.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnAyuda.Image = ((System.Drawing.Image)(resources.GetObject("btnAyuda.Image")));
+            this.btnAyuda.Location = new System.Drawing.Point(683, -2);
+            this.btnAyuda.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnAyuda.Name = "btnAyuda";
+            this.btnAyuda.Size = new System.Drawing.Size(118, 86);
+            this.btnAyuda.TabIndex = 6;
+            this.btnAyuda.Text = "Ayuda";
+            this.btnAyuda.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnAyuda.UseVisualStyleBackColor = false;
+            this.btnAyuda.Click += new System.EventHandler(this.btnAyuda_Click);
             // 
             // frmMenu
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
-            AutoScaleMode = AutoScaleMode.Font;
-            BackColor = Color.FromArgb(214, 235, 255);
-            ClientSize = new Size(800, 350);
-            Controls.Add(btnAyuda);
-            Controls.Add(btnReportes);
-            Controls.Add(btnMultas);
-            Controls.Add(btnPrestamos);
-            Controls.Add(btnUsuarios);
-            Controls.Add(btnEjemplares);
-            Controls.Add(btnLibros);
-            Name = "frmMenu";
-            Text = "Sistema de Gestión Biblioteca Universitaria";
-            Load += frmMenu_Load;
-            ResumeLayout(false);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(214)))), ((int)(((byte)(235)))), ((int)(((byte)(255)))));
+            this.ClientSize = new System.Drawing.Size(800, 280);
+            this.Controls.Add(this.btnAyuda);
+            this.Controls.Add(this.btnReportes);
+            this.Controls.Add(this.btnMultas);
+            this.Controls.Add(this.btnPrestamos);
+            this.Controls.Add(this.btnUsuarios);
+            this.Controls.Add(this.btnEjemplares);
+            this.Controls.Add(this.btnLibros);
+            this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.Name = "frmMenu";
+            this.Text = "Sistema de Gestión Biblioteca Universitaria";
+            this.ResumeLayout(false);
+
         }
     }
 }

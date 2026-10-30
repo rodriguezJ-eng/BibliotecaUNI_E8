@@ -1,10 +1,7 @@
 namespace Entidades
 {
     /// <summary>
-    /// Representa un libro del catálogo de la biblioteca. Es la ÚNICA clase Libro
-    /// de la solución: la usan tanto el módulo de Ejemplar (clave foránea
-    /// IDLibro) como el registro y las consultas de libros.
-    /// Solo contiene propiedades: no tiene lógica ni acceso a datos.
+    /// Representa un libro del catálogo de la biblioteca.
     /// </summary>
     public class Libro
     {
@@ -13,7 +10,14 @@ namespace Entidades
 
         public string ISBN { get; set; } = string.Empty;
         public string Titulo { get; set; } = string.Empty;
-        public string Autor { get; set; } = string.Empty;
+
+        // Relación con Autor: el libro almacena la referencia/ID del autor
+        public int IDAutor { get; set; }
+        public Autor Autor { get; set; }
+
+        // Propiedad para compatibilidad con código existente
+        public string AutorNombre { get; set; } = string.Empty;
+
         public string Categoria { get; set; } = string.Empty;
         public int Anio { get; set; }
         public string Edicion { get; set; } = string.Empty;

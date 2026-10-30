@@ -54,63 +54,7 @@ namespace BibliotecaUniversitaria.Forms
             }
         }
 
-        private void btnRegistroPrestamo_Click(object sender, EventArgs e)
-        {
-            string idLector = txtIdLector.Text.Trim();
-            string ejemplar = cmbEjemplar.Text.Trim();
 
-            if (string.IsNullOrWhiteSpace(idLector))
-            {
-                MessageBox.Show("Ingrese el ID del lector.", "Gestión de Préstamos",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(ejemplar))
-            {
-                MessageBox.Show("Ingrese el ejemplar a prestar.", "Gestión de Préstamos",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (!int.TryParse(txtDiasCredito.Text.Trim(), out int diasCredito) || diasCredito <= 0)
-            {
-                MessageBox.Show("Ingrese un número de días de crédito válido (mayor a 0).",
-                    "Gestión de Préstamos", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            Lector lector = BuscarORegistrarLector(idLector);
-            if (lector == null)
-            {
-                // El usuario cerró la ventana de registro sin completar el registro del lector.
-                return;
-            }
-
-            DateTime fechaPrestamo = dtpFechaPrestamo.Value.Date;
-            DateTime fechaDevolucion = fechaPrestamo.AddDays(diasCredito);
-
-            var prestamo = new Prestamo
-            {
-                Id = _siguienteIdPrestamo++,
-                IdLector = lector.IdLector,
-                NombreLector = lector.NombreCompleto,
-                Ejemplar = ejemplar,
-                FechaPrestamo = fechaPrestamo,
-                DiasCredito = diasCredito,
-                FechaDevolucion = fechaDevolucion,
-                Estado = "Activo"
-            };
-            Prestamos.Add(prestamo);
-
-            dtpFechaDevolucion.Value = fechaDevolucion;
-            CargarPrestamosEnGrid(FiltrarPrestamos());
-
-            MessageBox.Show(
-                $"Préstamo registrado para {lector.NombreCompleto}." +
-                $"\nFecha de devolución: {fechaDevolucion:dd/MM/yyyy}.",
-                "Gestión de Préstamos", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
 
         /// <summary>
         /// Busca al lector por su ID en frmRegistroLector.Lectores. Si no existe,
@@ -140,6 +84,53 @@ namespace BibliotecaUniversitaria.Forms
             }
 
             return lector;
+        }
+
+
+
+       
+
+        private List<Prestamo> FiltrarPrestamos()
+        {
+            DateTime hoy = DateTime.Today;
+
+            // La "expresión switch" (x switch { ... }) es de C# 8: en C# 7.3 se usa el switch de siempre.
+            switch (cmbPrestamos.SelectedItem?.ToString())
+            {
+                case "Activos":
+                    return Prestamos.Where(p => p.Estado == "Activo" && p.FechaDevolucion >= hoy).ToList();
+                case "Devueltos":
+                    return Prestamos.Where(p => p.Estado == "Devuelto").ToList();
+                case "Atrasados":
+                    return Prestamos.Where(p => p.Estado == "Activo" && p.FechaDevolucion < hoy).ToList();
+                default:
+                    return Prestamos.ToList();
+            }
+        }
+
+        private void CargarPrestamosEnGrid(List<Prestamo> lista)
+        {
+            dgvPrestamos.Rows.Clear();
+
+            foreach (var p in lista)
+            {
+                string estadoMostrado = p.Estado == "Activo" && p.FechaDevolucion < DateTime.Today
+                    ? "Atrasado"
+                    : p.Estado;
+
+                dgvPrestamos.Rows.Add(
+                    p.Id,
+                    p.NombreLector,
+                    p.Ejemplar,
+                    p.FechaPrestamo.ToShortDateString(),
+                    p.FechaDevolucion.ToShortDateString(),
+                    estadoMostrado);
+            }
+        }
+
+        private void cmbEjemplar_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
 
         private void btnBuscarLector_Click(object sender, EventArgs e)
@@ -230,42 +221,67 @@ namespace BibliotecaUniversitaria.Forms
             CargarPrestamosEnGrid(FiltrarPrestamos());
         }
 
-        private List<Prestamo> FiltrarPrestamos()
+        private void btnRegistroPrestamo_Click(object sender, EventArgs e)
         {
-            DateTime hoy = DateTime.Today;
+            string idLector = txtIdLector.Text.Trim();
+            string ejemplar = cmbEjemplar.Text.Trim();
 
-            // La "expresión switch" (x switch { ... }) es de C# 8: en C# 7.3 se usa el switch de siempre.
-            switch (cmbPrestamos.SelectedItem?.ToString())
+            if (string.IsNullOrWhiteSpace(idLector))
             {
-                case "Activos":
-                    return Prestamos.Where(p => p.Estado == "Activo" && p.FechaDevolucion >= hoy).ToList();
-                case "Devueltos":
-                    return Prestamos.Where(p => p.Estado == "Devuelto").ToList();
-                case "Atrasados":
-                    return Prestamos.Where(p => p.Estado == "Activo" && p.FechaDevolucion < hoy).ToList();
-                default:
-                    return Prestamos.ToList();
+                MessageBox.Show("Ingrese el ID del lector.", "Gestión de Préstamos",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
+
+            if (string.IsNullOrWhiteSpace(ejemplar))
+            {
+                MessageBox.Show("Ingrese el ejemplar a prestar.", "Gestión de Préstamos",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!int.TryParse(txtDiasCredito.Text.Trim(), out int diasCredito) || diasCredito <= 0)
+            {
+                MessageBox.Show("Ingrese un número de días de crédito válido (mayor a 0).",
+                    "Gestión de Préstamos", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            Lector lector = BuscarORegistrarLector(idLector);
+            if (lector == null)
+            {
+                // El usuario cerró la ventana de registro sin completar el registro del lector.
+                return;
+            }
+
+            DateTime fechaPrestamo = dtpFechaPrestamo.Value.Date;
+            DateTime fechaDevolucion = fechaPrestamo.AddDays(diasCredito);
+
+            var prestamo = new Prestamo
+            {
+                Id = _siguienteIdPrestamo++,
+                IdLector = lector.IdLector,
+                NombreLector = lector.NombreCompleto,
+                Ejemplar = ejemplar,
+                FechaPrestamo = fechaPrestamo,
+                DiasCredito = diasCredito,
+                FechaDevolucion = fechaDevolucion,
+                Estado = "Activo"
+            };
+            Prestamos.Add(prestamo);
+
+            dtpFechaDevolucion.Value = fechaDevolucion;
+            CargarPrestamosEnGrid(FiltrarPrestamos());
+
+            MessageBox.Show(
+                $"Préstamo registrado para {lector.NombreCompleto}." +
+                $"\nFecha de devolución: {fechaDevolucion:dd/MM/yyyy}.",
+                "Gestión de Préstamos", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void CargarPrestamosEnGrid(List<Prestamo> lista)
+        private void dtpFechaDevolucion_ValueChanged(object sender, EventArgs e)
         {
-            dgvPrestamos.Rows.Clear();
 
-            foreach (var p in lista)
-            {
-                string estadoMostrado = p.Estado == "Activo" && p.FechaDevolucion < DateTime.Today
-                    ? "Atrasado"
-                    : p.Estado;
-
-                dgvPrestamos.Rows.Add(
-                    p.Id,
-                    p.NombreLector,
-                    p.Ejemplar,
-                    p.FechaPrestamo.ToShortDateString(),
-                    p.FechaDevolucion.ToShortDateString(),
-                    estadoMostrado);
-            }
         }
     }
 }

@@ -10,6 +10,14 @@ namespace BibliotecaUniversitaria.Forms
             InitializeComponent();
         }
 
+        private void btnUsuarios_Click_1(object sender, EventArgs e)
+        {
+            using (var frm = new frmRegistroLector())
+            {
+                frm.ShowDialog();
+            }
+        }
+
         private void btnLibros_Click(object sender, EventArgs e)
         {
             using (var frm = new frmRegistroLibro())
@@ -21,14 +29,6 @@ namespace BibliotecaUniversitaria.Forms
         private void btnEjemplares_Click(object sender, EventArgs e)
         {
             using (var frm = new frmRegistroEjemplar())
-            {
-                frm.ShowDialog();
-            }
-        }
-
-        private void btnUsuarios_Click(object sender, EventArgs e)
-        {
-            using (var frm = new frmRegistroLector())
             {
                 frm.ShowDialog();
             }
@@ -65,11 +65,6 @@ namespace BibliotecaUniversitaria.Forms
                 "Use los botones de arriba para administrar libros, ejemplares, usuarios,\n" +
                 "préstamos, multas y reportes.",
                 "Ayuda", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private void frmMenu_Load(object sender, EventArgs e)
-        {
-
         }
     }
 }

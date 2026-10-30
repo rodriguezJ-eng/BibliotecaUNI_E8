@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows.Forms;
 using CapaNegocio;
 using Entidades;
@@ -9,399 +8,279 @@ namespace BibliotecaUniversitaria.Forms
 {
     public partial class frmRegistroLibro : Form
     {
-        /// <summary>Catalogo de libros compartido (LibroNegocio); ya no vive en este formulario.</summary>
-        private readonly LibroNegocio libroNegocio = new LibroNegocio();
+        private LibroNegocio libroNegocio = new LibroNegocio();
 
-        /// <summary>Autores registrados, disponibles para asociarse a un libro.</summary>
-        public static List<Autor> Autores { get; } = new List<Autor>();
+        // 0 = se registra un libro nuevo; distinto de 0 = ID del libro que se edita.
+        private int idLibroEdicion = 0;
 
         public frmRegistroLibro()
         {
             InitializeComponent();
-            CargarCategorias();
-            ActualizarComboAutores();
-            CargarLibrosEnGrid(libroNegocio.ConsultarTodos());
-            CargarAutoresEnGrid(Autores);
         }
 
+        private void frmRegistroLibro_Load(object sender, EventArgs e)
+        {
+            CargarAutores();
+            CargarCategorias();
+            CargarLibros();
+        }
+
+        private void CargarAutores()
+        {
+            try
+            {
+                List<Autor> autores = libroNegocio.ConsultarAutores();
+                cmbAutor.DataSource = null;
+                cmbAutor.DisplayMember = "NombreCompleto";
+                cmbAutor.ValueMember = "IDAutor";
+                cmbAutor.DataSource = autores;
+                cmbAutor.SelectedIndex = -1;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar los autores: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
         private void CargarCategorias()
         {
             cmbCategoria.Items.Clear();
-            cmbCategoria.Items.AddRange(new string[]
+            cmbCategoria.Items.AddRange(new object[]
             {
-                "Ingeniería",
-                "Matemáticas",
-                "Ciencias Básicas",
-                "Tecnología",
-                "Economía",
-                "Literatura"
+                "MatemÃ¡ticas",
+                "ProgramaciÃ³n",
+                "IngenierÃ­a",
+                "Ciencias",
+                "Literatura",
+                "Historia",
+                "Otros"
             });
+            cmbCategoria.SelectedIndex = -1;
         }
 
-        // Datos generales del libro
-
-        private void btnNuevo_Click(object sender, EventArgs e)
+        private void CargarLibros()
         {
-            LimpiarCamposLibro();
-        }
-
-        private void btnGuardar_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtISBN.Text) ||
-                string.IsNullOrWhiteSpace(txtTitulo.Text) ||
-                string.IsNullOrWhiteSpace(cmbAutor.Text) ||
-                cmbCategoria.SelectedIndex == -1 ||
-                string.IsNullOrWhiteSpace(txtAnio.Text) ||
-                string.IsNullOrEmpty(txtEdicion.Text) ||
-                string.IsNullOrWhiteSpace(txtEditorial.Text))
-            {
-                MessageBox.Show("Por favor, completa todos los campos.", "Campos vacíos",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (!int.TryParse(txtAnio.Text.Trim(), out int anio))
-            {
-                MessageBox.Show("El año debe ser un número entero válido.", "Dato inválido",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtAnio.Focus();
-                return;
-            }
-
-            if (libroNegocio.ExisteIsbn(txtISBN.Text.Trim()))
-            {
-                MessageBox.Show("Ya existe un libro registrado con ese ISBN.", "ISBN duplicado",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtISBN.Focus();
-                return;
-            }
-
-            var libro = new Libro
-            {
-                ISBN = txtISBN.Text.Trim(),
-                Titulo = txtTitulo.Text.Trim(),
-                Autor = cmbAutor.Text.Trim(),
-                Categoria = cmbCategoria.Text,
-                Anio = anio,
-                Edicion = txtEdicion.Text.Trim(),
-                Editorial = txtEditorial.Text.Trim()
-            };
-
             try
             {
-                libroNegocio.Insertar(libro);
+                List<Libro> libros = libroNegocio.ConsultarTodos();
+
+                dgvLibros.Rows.Clear();
+                foreach (Libro libro in libros)
+                {
+                    int indice = dgvLibros.Rows.Add(
+                        libro.ISBN,
+                        libro.Titulo,
+                        string.IsNullOrWhiteSpace(libro.AutorNombre) ? "Sin autor" : libro.AutorNombre,
+                        libro.Categoria,
+                        libro.Anio == 0 ? string.Empty : libro.Anio.ToString(),
+                        libro.Edicion,
+                        libro.Editorial);
+
+                    // Cada fila guarda su libro para no depender del orden ni del criterio de ordenaciÃ³n.
+                    dgvLibros.Rows[indice].Tag = libro;
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Registro Libro",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                MessageBox.Show("Error al cargar los libros: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            CargarLibrosEnGrid(libroNegocio.ConsultarTodos());
+        }
 
-            MessageBox.Show("El libro se ha registrado exitosamente.", "Libro Registrado",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        private Libro ObtenerLibroSeleccionado()
+        {
+            if (dgvLibros.CurrentRow == null)
+                return null;
 
-            LimpiarCamposLibro();
+            return dgvLibros.CurrentRow.Tag as Libro;
+        }
+
+        private void SeleccionarAutor(Libro libro)
+        {
+            cmbAutor.SelectedIndex = -1;
+
+            for (int i = 0; i < cmbAutor.Items.Count; i++)
+            {
+                Autor autor = cmbAutor.Items[i] as Autor;
+                if (autor == null)
+                    continue;
+
+                bool mismoId = libro.IDAutor > 0 && autor.IDAutor == libro.IDAutor;
+                bool mismoNombre = libro.IDAutor <= 0
+                                   && !string.IsNullOrWhiteSpace(libro.AutorNombre)
+                                   && autor.NombreCompleto == libro.AutorNombre;
+
+                if (mismoId || mismoNombre)
+                {
+                    cmbAutor.SelectedIndex = i;
+                    return;
+                }
+            }
+        }
+
+        private void btnNuevo_Click(object sender, EventArgs e)
+        {
+            idLibroEdicion = 0;
+            LimpiarCampos();
+            dgvLibros.ClearSelection();
+            txtISBN.Focus();
         }
 
         private void btnEditar_Click(object sender, EventArgs e)
         {
-            if (dgvLibros.CurrentRow == null)
-            {
-                MessageBox.Show("Selecciona el libro que deseas editar.", "Selección vacía",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(txtISBN.Text) ||
-                string.IsNullOrWhiteSpace(txtTitulo.Text) ||
-                string.IsNullOrWhiteSpace(cmbAutor.Text) ||
-                cmbCategoria.SelectedIndex == -1 ||
-                string.IsNullOrWhiteSpace(txtAnio.Text) ||
-                string.IsNullOrWhiteSpace(txtEditorial.Text))
-            {
-                MessageBox.Show("Por favor, completa todos los campos.", "Campos vacíos",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (!int.TryParse(txtAnio.Text.Trim(), out int anio))
-            {
-                MessageBox.Show("El año debe ser un número entero válido.", "Dato inválido",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtAnio.Focus();
-                return;
-            }
-
-            var libro = dgvLibros.CurrentRow.Tag as Libro;
-
+            Libro libro = ObtenerLibroSeleccionado();
             if (libro == null)
             {
-                MessageBox.Show("No se encontró el libro seleccionado.", "Registro Libro",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Seleccione un libro de la lista para editarlo.", "ValidaciÃ³n", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            string nuevoIsbn = txtISBN.Text.Trim();
-            if (libroNegocio.ExisteIsbn(nuevoIsbn, libro.IDLibro))
+            idLibroEdicion = libro.IDLibro;
+
+            txtISBN.Text = libro.ISBN;
+            txtTitulo.Text = libro.Titulo;
+            txtEditorial.Text = libro.Editorial;
+            txtEdicion.Text = libro.Edicion;
+            txtAnio.Text = libro.Anio == 0 ? string.Empty : libro.Anio.ToString();
+
+            if (string.IsNullOrWhiteSpace(libro.Categoria))
             {
-                MessageBox.Show("Ya existe otro libro registrado con ese ISBN.", "ISBN duplicado",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtISBN.Focus();
-                return;
+                cmbCategoria.SelectedIndex = -1;
+            }
+            else
+            {
+                if (!cmbCategoria.Items.Contains(libro.Categoria))
+                    cmbCategoria.Items.Add(libro.Categoria);
+                cmbCategoria.SelectedItem = libro.Categoria;
             }
 
-            var libroActualizado = new Libro
-            {
-                IDLibro = libro.IDLibro,
-                ISBN = nuevoIsbn,
-                Titulo = txtTitulo.Text.Trim(),
-                Autor = cmbAutor.Text.Trim(),
-                Categoria = cmbCategoria.Text,
-                Anio = anio,
-                // La edicion no es obligatoria al editar: si se deja vacia se conserva la anterior
-                Edicion = string.IsNullOrWhiteSpace(txtEdicion.Text) ? libro.Edicion : txtEdicion.Text.Trim(),
-                Editorial = txtEditorial.Text.Trim()
-            };
+            SeleccionarAutor(libro);
 
-            try
-            {
-                libroNegocio.Actualizar(libroActualizado);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Registro Libro",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            CargarLibrosEnGrid(libroNegocio.ConsultarTodos());
-
-            MessageBox.Show("El libro se ha actualizado exitosamente.", "Libro Actualizado",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            LimpiarCamposLibro();
+            MessageBox.Show("Modifique los datos y presione Guardar para aplicar los cambios.",
+                "Editar libro", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            txtTitulo.Focus();
         }
 
         private void btnEliminar_Click(object sender, EventArgs e)
         {
-            if (dgvLibros.Rows.Count == 0 || dgvLibros.SelectedRows.Count == 0)
+            Libro libro = ObtenerLibroSeleccionado();
+            if (libro == null)
             {
-                MessageBox.Show("Por favor, selecciona la fila del libro que deseas eliminar.", "Selección vacía",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Seleccione un libro de la lista para eliminarlo.", "ValidaciÃ³n", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            DataGridViewRow filaSeleccionada = dgvLibros.SelectedRows[0];
-            var libroSeleccionado = filaSeleccionada.Tag as Libro;
+            DialogResult respuesta = MessageBox.Show(
+                "Â¿Desea eliminar el libro \"" + libro.Titulo + "\"?",
+                "Confirmar eliminaciÃ³n",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
 
-            DialogResult resultado = MessageBox.Show("¿Estás seguro de eliminar este libro?", "Confirmar eliminación",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (respuesta != DialogResult.Yes)
+                return;
 
-            if (resultado == DialogResult.Yes)
+            try
             {
-                if (libroSeleccionado != null)
+                libroNegocio.Eliminar(libro.IDLibro);
+                MessageBox.Show("Libro eliminado correctamente.", "Ã‰xito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                LimpiarCampos();
+                CargarLibros();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnGuardar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(txtTitulo.Text))
                 {
-                    libroNegocio.Eliminar(libroSeleccionado.IDLibro);
+                    MessageBox.Show("El tÃ­tulo no puede estar vacÃ­o.", "ValidaciÃ³n", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtTitulo.Focus();
+                    return;
                 }
 
-                CargarLibrosEnGrid(libroNegocio.ConsultarTodos());
+                if (cmbAutor.SelectedValue == null)
+                {
+                    MessageBox.Show("Debe seleccionar un autor vÃ¡lido.", "ValidaciÃ³n", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    cmbAutor.Focus();
+                    return;
+                }
 
-                MessageBox.Show("Libro eliminado correctamente.", "Eliminado",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                bool esEdicion = idLibroEdicion > 0;
 
-                LimpiarCamposLibro();
+                Libro libro = new Libro
+                {
+                    IDLibro = idLibroEdicion,
+                    ISBN = txtISBN.Text.Trim(),
+                    Titulo = txtTitulo.Text.Trim(),
+                    IDAutor = Convert.ToInt32(cmbAutor.SelectedValue),
+                    Autor = cmbAutor.SelectedItem as Autor,
+                    Editorial = txtEditorial.Text.Trim(),
+                    Edicion = txtEdicion.Text.Trim(),
+                    Categoria = cmbCategoria.Text.Trim()
+                };
+
+                int anio = 0;
+                int.TryParse(txtAnio.Text.Trim(), out anio);
+                libro.Anio = anio;
+
+                if (libro.Autor != null)
+                    libro.AutorNombre = libro.Autor.NombreCompleto;
+
+                if (esEdicion)
+                    libroNegocio.Actualizar(libro);
+                else
+                    libroNegocio.Insertar(libro);
+
+                MessageBox.Show(esEdicion ? "Libro actualizado exitosamente." : "Libro registrado exitosamente.",
+                    "Ã‰xito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                LimpiarCampos();
+                CargarLibros();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void LimpiarCamposLibro()
+        private void LimpiarCampos()
         {
+            idLibroEdicion = 0;
+
             txtISBN.Clear();
             txtTitulo.Clear();
-            cmbAutor.SelectedIndex = -1;
-            cmbCategoria.SelectedIndex = -1;
-            txtAnio.Clear();
-            txtEdicion.Clear();
             txtEditorial.Clear();
-            txtISBN.Focus();
+            txtEdicion.Clear();
+            txtAnio.Clear();
+            cmbCategoria.SelectedIndex = -1;
+            if (cmbAutor.Items.Count > 0)
+                cmbAutor.SelectedIndex = -1;
+
+            txtTitulo.Focus();
         }
 
-        private void CargarLibrosEnGrid(List<Libro> lista)
+        private void btnNuevoAutor_Click(object sender, EventArgs e)
         {
-            dgvLibros.Rows.Clear();
 
-            foreach (var libro in lista)
-            {
-                int fila = dgvLibros.Rows.Add(
-                    libro.ISBN,
-                    libro.Titulo,
-                    libro.Autor,
-                    libro.Categoria,
-                    libro.Anio,
-                    libro.Edicion,
-                    libro.Editorial
-                );
-                dgvLibros.Rows[fila].Tag = libro;
-            }
-        }
-
-        // Autores
-
-        private void btnNuevoAutor_Click_1(object sender, EventArgs e)
-        {
-            LimpiarCamposAutor();
-        }
-
-        private void btnGuardarAutor_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtIdAutor.Text) ||
-               string.IsNullOrWhiteSpace(txtNombreAutor.Text) ||
-               string.IsNullOrWhiteSpace(txtApellidoAutor.Text))
-            {
-                MessageBox.Show("Por favor, completa todos los campos.", "Campos vacíos",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (Autores.Any(a => a.Id.Equals(txtIdAutor.Text.Trim(), StringComparison.OrdinalIgnoreCase)))
-            {
-                MessageBox.Show("Ya existe un autor registrado con ese ID.", "ID duplicado",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtIdAutor.Focus();
-                return;
-            }
-
-            var autor = new Autor
-            {
-                Id = txtIdAutor.Text.Trim(),
-                Nombre = txtNombreAutor.Text.Trim(),
-                Apellido = txtApellidoAutor.Text.Trim()
-            };
-
-            Autores.Add(autor);
-            CargarAutoresEnGrid(Autores);
-            ActualizarComboAutores();
-
-            MessageBox.Show("El autor se ha registrado exitosamente.", "Autor Registrado",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            LimpiarCamposAutor();
-        }
-
-        private void btnEditarAutor_Click(object sender, EventArgs e)
-        {
-            if (dgvRegistroAutores.CurrentRow == null)
-            {
-                MessageBox.Show("Selecciona el autor que deseas editar.", "Selección vacía",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(txtIdAutor.Text) ||
-                string.IsNullOrWhiteSpace(txtNombreAutor.Text) ||
-                string.IsNullOrWhiteSpace(txtApellidoAutor.Text))
-            {
-                MessageBox.Show("Por favor, completa todos los campos.", "Campos vacíos",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string idOriginal = Convert.ToString(dgvRegistroAutores.CurrentRow.Cells["Column2"].Value);
-            var autor = Autores.FirstOrDefault(a => a.Id == idOriginal);
-
-            if (autor == null)
-            {
-                MessageBox.Show("No se encontró el autor seleccionado.", "Registro Autor",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            string nuevoId = txtIdAutor.Text.Trim();
-            if (!nuevoId.Equals(idOriginal, StringComparison.OrdinalIgnoreCase) &&
-                Autores.Any(a => a.Id.Equals(nuevoId, StringComparison.OrdinalIgnoreCase)))
-            {
-                MessageBox.Show("Ya existe otro autor registrado con ese ID.", "ID duplicado",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtIdAutor.Focus();
-                return;
-            }
-
-            autor.Id = nuevoId;
-            autor.Nombre = txtNombreAutor.Text.Trim();
-            autor.Apellido = txtApellidoAutor.Text.Trim();
-
-            CargarAutoresEnGrid(Autores);
-            ActualizarComboAutores();
-
-            MessageBox.Show("El autor se ha actualizado exitosamente.", "Autor Actualizado",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            LimpiarCamposAutor();
         }
 
         private void btnEliminarAutor_Click(object sender, EventArgs e)
         {
-            if (dgvRegistroAutores.Rows.Count == 0 || dgvRegistroAutores.SelectedRows.Count == 0)
-            {
-                MessageBox.Show("Por favor, selecciona la fila del autor que deseas eliminar.", "Selección vacía",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
 
-            DataGridViewRow filaSeleccionada = dgvRegistroAutores.SelectedRows[0];
-            string id = Convert.ToString(filaSeleccionada.Cells["Column2"].Value);
-
-            DialogResult resultado = MessageBox.Show("¿Estás seguro de eliminar este autor?", "Confirmar eliminación",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (resultado == DialogResult.Yes)
-            {
-                var autor = Autores.FirstOrDefault(a => a.Id == id);
-                if (autor != null)
-                {
-                    Autores.Remove(autor);
-                }
-
-                CargarAutoresEnGrid(Autores);
-                ActualizarComboAutores();
-
-                MessageBox.Show("Autor eliminado correctamente.", "Eliminado",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                LimpiarCamposAutor();
-            }
         }
 
-        private void LimpiarCamposAutor()
+        private void btnEditarAutor_Click(object sender, EventArgs e)
         {
-            txtIdAutor.Clear();
-            txtNombreAutor.Clear();
-            txtApellidoAutor.Clear();
-            txtIdAutor.Focus();
+
         }
 
-        private void CargarAutoresEnGrid(List<Autor> lista)
+        private void btnGuardarAutor_Click(object sender, EventArgs e)
         {
-            dgvRegistroAutores.Rows.Clear();
 
-            foreach (var autor in lista)
-            {
-                dgvRegistroAutores.Rows.Add(autor.Id, autor.Nombre, autor.Apellido);
-            }
-        }
-
-        /// <summary>Refresca el combo de autores de la pestaña "Datos generales" con la lista actual.</summary>
-        private void ActualizarComboAutores()
-        {
-            string seleccionActual = cmbAutor.Text;
-
-            cmbAutor.Items.Clear();
-            cmbAutor.Items.AddRange(Autores.Select(a => a.NombreCompleto).ToArray());
-
-            int indice = cmbAutor.Items.IndexOf(seleccionActual);
-            cmbAutor.SelectedIndex = indice;
         }
     }
 }

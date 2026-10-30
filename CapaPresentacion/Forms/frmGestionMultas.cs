@@ -43,39 +43,7 @@ namespace BibliotecaUniversitaria.Forms
             }
         }
 
-        private void btnBuscar_Click(object sender, EventArgs e)
-        {
-            string filtro = txtBuscar.Text.Trim();
 
-            var resultado = string.IsNullOrWhiteSpace(filtro)
-                ? Multas
-                : Multas.Where(m =>
-                    m.Lector.IndexOf(filtro, StringComparison.OrdinalIgnoreCase) >= 0||
-                    m.Id.ToString() == filtro ||
-                    m.IdPrestamo.ToString() == filtro).ToList();
-
-            CargarMultasEnGrid(resultado);
-        }
-
-        private void btnMarcarPagada_Click_1(object sender, EventArgs e)
-        {
-            var multa = ObtenerMultaSeleccionada();
-            if (multa == null) return;
-
-            if (multa.Estado == "Pagada")
-            {
-                MessageBox.Show("Esta multa ya se encuentra registrada como pagada.", "Gestión de Multas",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            multa.Estado = "Pagada";
-
-            MessageBox.Show($"La multa #{multa.Id} ha sido marcada como PAGADA con éxito.", "Pago de Multa",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            CargarMultasEnGrid(Multas);
-        }
 
         private void btnEliminar_Click(object sender, EventArgs e)
         {
@@ -134,6 +102,40 @@ namespace BibliotecaUniversitaria.Forms
         private void btnCerrar_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void btnBuscar_Click_1(object sender, EventArgs e)
+        {
+            string filtro = txtBuscar.Text.Trim();
+
+            var resultado = string.IsNullOrWhiteSpace(filtro)
+                ? Multas
+                : Multas.Where(m =>
+                    m.Lector.IndexOf(filtro, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    m.Id.ToString() == filtro ||
+                    m.IdPrestamo.ToString() == filtro).ToList();
+
+            CargarMultasEnGrid(resultado);
+        }
+
+        private void btnMarcarPagada_Click(object sender, EventArgs e)
+        {
+            var multa = ObtenerMultaSeleccionada();
+            if (multa == null) return;
+
+            if (multa.Estado == "Pagada")
+            {
+                MessageBox.Show("Esta multa ya se encuentra registrada como pagada.", "Gestión de Multas",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            multa.Estado = "Pagada";
+
+            MessageBox.Show($"La multa #{multa.Id} ha sido marcada como PAGADA con éxito.", "Pago de Multa",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            CargarMultasEnGrid(Multas);
         }
     }
 }

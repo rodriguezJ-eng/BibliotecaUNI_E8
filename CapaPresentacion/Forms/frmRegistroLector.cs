@@ -54,10 +54,71 @@ namespace BibliotecaUniversitaria.Forms
             txtTipo.Text = fila.Cells[6].Value?.ToString();
         }
 
+
+        private bool ValidarCampos()
+        {
+            if (string.IsNullOrWhiteSpace(txtIdLector.Text) ||
+                string.IsNullOrWhiteSpace(txtNombres.Text) ||
+                string.IsNullOrWhiteSpace(txtApellidos.Text))
+            {
+                MessageBox.Show("El ID de lector, los nombres y los apellidos son obligatorios.",
+                    "Registro de lectores", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+            return true;
+        }
+
+        private void LimpiarCampos()
+        {
+            txtIdLector.Clear();
+            txtNombres.Clear();
+            txtApellidos.Clear();
+            txtTelefono.Clear();
+            txtCorreo.Clear();
+            txtCarrera.Clear();
+            txtTipo.Clear();
+        }
+
+        private void CargarLectoresEnGrid()
+        {
+            dgvUsuarios.Rows.Clear();
+            foreach (var l in Lectores)
+            {
+                dgvUsuarios.Rows.Add(l.IdLector, l.Nombres, l.Apellidos, l.Telefono, l.Correo, l.Carrera, l.Tipo);
+            }
+        }
+
         private void btnNuevo_Click(object sender, EventArgs e)
         {
             LimpiarCampos();
             txtIdLector.Focus();
+        }
+
+        private void btnCerrar_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void btnEliminar_Click(object sender, EventArgs e)
+        {
+            if (dgvUsuarios.CurrentRow == null)
+            {
+                MessageBox.Show("Seleccione un lector de la lista.", "Registro de lectores",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string idLector = dgvUsuarios.CurrentRow.Cells[0].Value?.ToString();
+            var lector = Lectores.FirstOrDefault(l => l.IdLector == idLector);
+            if (lector == null) return;
+
+            var respuesta = MessageBox.Show($"¿Eliminar al lector {lector.NombreCompleto}?",
+                "Confirmar eliminación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (respuesta != DialogResult.Yes) return;
+
+            Lectores.Remove(lector);
+            CargarLectoresEnGrid();
+            LimpiarCampos();
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)
@@ -115,66 +176,6 @@ namespace BibliotecaUniversitaria.Forms
             lector.Tipo = txtTipo.Text.Trim();
 
             CargarLectoresEnGrid();
-        }
-
-        private void btnEliminar_Click(object sender, EventArgs e)
-        {
-            if (dgvUsuarios.CurrentRow == null)
-            {
-                MessageBox.Show("Seleccione un lector de la lista.", "Registro de lectores",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string idLector = dgvUsuarios.CurrentRow.Cells[0].Value?.ToString();
-            var lector = Lectores.FirstOrDefault(l => l.IdLector == idLector);
-            if (lector == null) return;
-
-            var respuesta = MessageBox.Show($"¿Eliminar al lector {lector.NombreCompleto}?",
-                "Confirmar eliminación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (respuesta != DialogResult.Yes) return;
-
-            Lectores.Remove(lector);
-            CargarLectoresEnGrid();
-            LimpiarCampos();
-        }
-
-        private void btnCerrar_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
-        private bool ValidarCampos()
-        {
-            if (string.IsNullOrWhiteSpace(txtIdLector.Text) ||
-                string.IsNullOrWhiteSpace(txtNombres.Text) ||
-                string.IsNullOrWhiteSpace(txtApellidos.Text))
-            {
-                MessageBox.Show("El ID de lector, los nombres y los apellidos son obligatorios.",
-                    "Registro de lectores", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
-            return true;
-        }
-
-        private void LimpiarCampos()
-        {
-            txtIdLector.Clear();
-            txtNombres.Clear();
-            txtApellidos.Clear();
-            txtTelefono.Clear();
-            txtCorreo.Clear();
-            txtCarrera.Clear();
-            txtTipo.Clear();
-        }
-
-        private void CargarLectoresEnGrid()
-        {
-            dgvUsuarios.Rows.Clear();
-            foreach (var l in Lectores)
-            {
-                dgvUsuarios.Rows.Add(l.IdLector, l.Nombres, l.Apellidos, l.Telefono, l.Correo, l.Carrera, l.Tipo);
-            }
         }
     }
 }
